@@ -1,19 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <semaphore.h>
 
 #define CHAIRS 5
 #define DELAY 100000
-semaphore mutex = 1, stylist = 0 customers = 0;
+#define	CUSTOMER_COUNT	5
+
+sem_t mutex;
+sem_t stylistSem;
+sem_t customersSem;
+
+//semaphore mutex = 1, stylist = 0 customers = 0;
 int waiting = 0;
 
-void main(void) {
-	// Create 40 customer threads and 1 stylist thread
-	// Don't forget to join threads
-}
-
-void stylist(void) {
-	int j;
+void stylist() {
+	printf("I'm a stylist and I don't do anything yet\n");
+	/*int j;
 	while(1) {
 		down(&customers);
 		down(&mutex);
@@ -24,11 +27,12 @@ void stylist(void) {
 		for(j = 0; j < DELAY; j++) {
 			// cut hair
 		}
-	}
+	}*/
 }
 
-void customer(void) {
-	int j;
+void customer() {
+	printf("I'm a customer and I don't do anything yet\n");
+	/*int j;
 	while(1) {
 		down(&mutex);
 		if(waiting < CHAIRS) {
@@ -44,5 +48,32 @@ void customer(void) {
 				// Go shopping
 			}
 		}
-	}
+	}*/
 }
+
+int main(void) {
+	// Create 40 customer threads and 1 stylist thread
+	// Don't forget to join threads
+	pthread_t stylistThread;
+	pthread_t customerThread[CUSTOMER_COUNT];
+
+	// Create threads
+	pthread_create(&stylistThread, NULL, (void *)stylist, NULL);
+
+	for(int i = 0; i < CUSTOMER_COUNT; i++) {
+		pthread_create(&customerThread[i], NULL, (void *)customer, NULL);
+	}
+
+
+	// Join threads
+	pthread_join(stylistThread, NULL);
+
+	for(int i = 0; i < CUSTOMER_COUNT; i++ ) {
+		pthread_join(customerThread[i], NULL);
+	}
+
+	return 0;
+
+
+}
+
