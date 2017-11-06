@@ -89,8 +89,10 @@ void salonState() { // print how many customers are waiting
 
 // Called from stylistLoop
 void checkCustomer() {
+	sem_wait(&monitorArena.customerAvailable.mutex);
 	sem_wait(&monitorArena.stylistAvailable.mutex);
 	monitorArena.stylist = 1;
+	sem_post(&monitorArena.customerAvailable.mutex);
 	sem_post(&monitorArena.stylistAvailable.mutex);
 
 	signal(monitorArena.stylistAvailable); // stylist's ready to cut hair
@@ -100,9 +102,11 @@ void checkCustomer() {
 	}
 
 	sem_wait(&monitorArena.customerAvailable.mutex);
+	sem_wait(&monitorArena.stylistAvailable.mutex);
 	monitorArena.customer = monitorArena.customer - 1;
 	haircutCount = haircutCount + 1;
 	sem_post(&monitorArena.customerAvailable.mutex);
+	sem_post(&monitorArena.stylistAvailable.mutex);
 }
 
 // Called from customerLoop
@@ -113,16 +117,20 @@ int checkStylist() {
 	if(monitorArena.customer < CHAIRS) {
 
 		sem_wait(&monitorArena.customerAvailable.mutex);
+		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.customer = monitorArena.customer + 1;
 		sem_post(&monitorArena.customerAvailable.mutex);
+		sem_post(&monitorArena.stylistAvailable.mutex);
 
 
 		signal(monitorArena.customerAvailable);
 		if(monitorArena.stylist == 0) { // do not use while here
 			wait(monitorArena.stylistAvailable);
 		}
+		sem_wait(&monitorArena.customerAvailable.mutex);
 		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.stylist = 0;
+		sem_post(&monitorArena.customerAvailable.mutex);
 		sem_post(&monitorArena.stylistAvailable.mutex);
 		status = 1;
 	}
