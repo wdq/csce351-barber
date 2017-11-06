@@ -5,7 +5,7 @@
 
 - To compile and execute my code type this into this directory:
 
-gcc -pthread sleepingStylistSem.c -o out && ./out
+gcc -pthread -std=c99 sleepingStylistSem.c -o out && ./out
 
 
 
