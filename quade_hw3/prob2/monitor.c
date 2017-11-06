@@ -9,6 +9,7 @@ typedef struct cond cond;
 struct cond {
 	int blockedThreadsCount;
 	sem_t mutex;
+	int maxThreads;
 };
 
 typedef struct arena arena;
@@ -33,8 +34,10 @@ void monInit() {
 	cond stylistAvailableCond;
 	sem_init(&stylistAvailableCond.mutex, 0, 1);
 	stylistAvailableCond.blockedThreadsCount = 0;
+	stylistAvailableCond.maxThreads = 1;
 	cond customerAvailableCond;
 	customerAvailableCond.blockedThreadsCount = 0;
+	customerAvailableCond.maxThreads = 5;
 	sem_init(&customerAvailableCond.mutex, 0, 1);
 
 	sem_init(&monitorArena.mutex, 0, 1);
@@ -58,7 +61,14 @@ void wait(cond cv) {
 	cv.blockedThreadsCount = cv.blockedThreadsCount + 1;
 	sem_post(&cv.mutex);
 	//printf("Block count: %i\n", count(cv));
-	while(count(cv) > 0) {
+	while(1) {
+		sem_wait(&cv.mutex);
+		int cvcount = count(cv);
+		if(cvcount < cv.maxThreads) {
+			sem_post(&cv.mutex);
+			break;
+		}
+		sem_post(&cv.mutex);
 		//salonState();
 
 	}
@@ -93,6 +103,7 @@ void checkCustomer() {
 
 	signal(monitorArena.stylistAvailable); // stylist's ready to cut hair
 	//printf("B-3\n");
+
 	if(monitorArena.customer == 0) { // do not use while here
 		//printf("B-4\n");
 		wait(monitorArena.customerAvailable); // If there aren't customers, then wait/sleep.
@@ -119,15 +130,22 @@ int checkStylist() {
 		monitorArena.customer = monitorArena.customer + 1;
 		sem_post(&monitorArena.customerAvailable.mutex);
 
+		//printf("CS-3\n");
+
 		signal(monitorArena.customerAvailable);
 		if(monitorArena.stylist == 0) { // do not use while here
+			//printf("CS-4\n");
 			wait(monitorArena.stylistAvailable);
 		}
+		//printf("CS-5\n");
 		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.stylist = 0;
 		sem_post(&monitorArena.stylistAvailable.mutex);
-
+		//printf("CS-6\n");
 		status = 1;
+	} else if(monitorArena.customer == CHAIRS) {
+		//printf("CS-0\n");
+		signal(monitorArena.customerAvailable);
 	}
 	return status;
 }
