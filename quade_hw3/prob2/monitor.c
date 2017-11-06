@@ -56,21 +56,17 @@ int count(cond cv) {
 
 // Relinquishes exclusive access to the monitor and then suspends the executing threads
 void wait(cond cv) {
-	//printf("Wait\n");
 	sem_wait(&cv.mutex);
 	cv.blockedThreadsCount = cv.blockedThreadsCount + 1;
 	sem_post(&cv.mutex);
-	//printf("Block count: %i\n", count(cv));
 	while(1) {
 		sem_wait(&cv.mutex);
 		int cvcount = count(cv);
-		if(cvcount < cv.maxThreads) {
+		if(cvcount <= cv.maxThreads) {
 			sem_post(&cv.mutex);
 			break;
 		}
 		sem_post(&cv.mutex);
-		//salonState();
-
 	}
 
 }
@@ -79,7 +75,6 @@ void wait(cond cv) {
 // The signaled thread resumes execution where it was last suspended.
 // The signaler exits the monitor and suspends itself at the entry queue. 
 void signal(cond cv) {
-	//printf("Signal\n");
 	sem_wait(&cv.mutex);
 	cv.blockedThreadsCount = cv.blockedThreadsCount - 1;
 	sem_post(&cv.mutex);
@@ -89,63 +84,47 @@ void signal(cond cv) {
 void salonState() { // print how many customers are waiting
 	// print the state of the waiting chair using the following
 	// format: first used chair: last used chair: count\n.
-	//printf("Printing salon state\n");
 	printf("haircuts: %i, customer: %i, stylist: %i, blockedCustomer: %i, blockedStylist: %i\n", haircutCount, monitorArena.customer, monitorArena.stylist, count(monitorArena.customerAvailable), count(monitorArena.stylistAvailable));
 }
 
 // Called from stylistLoop
 void checkCustomer() {
-	//printf("B-1\n");
 	sem_wait(&monitorArena.stylistAvailable.mutex);
 	monitorArena.stylist = 1;
 	sem_post(&monitorArena.stylistAvailable.mutex);
-	//printf("B-2\n");
 
 	signal(monitorArena.stylistAvailable); // stylist's ready to cut hair
-	//printf("B-3\n");
 
 	if(monitorArena.customer == 0) { // do not use while here
-		//printf("B-4\n");
 		wait(monitorArena.customerAvailable); // If there aren't customers, then wait/sleep.
 	}
-	//printf("B-5\n");
 
 	sem_wait(&monitorArena.customerAvailable.mutex);
 	monitorArena.customer = monitorArena.customer - 1;
 	haircutCount = haircutCount + 1;
 	sem_post(&monitorArena.customerAvailable.mutex);
-	//printf("B-7\n");
 }
 
 // Called from customerLoop
 int checkStylist() {
 	// This function may have faults.
 	// If you think it does, you'll need to fix it.
-	//printf("CS-1\n");
 	int status = 0;
 	if(monitorArena.customer < CHAIRS) {
-		//printf("CS-2\n");
 
 		sem_wait(&monitorArena.customerAvailable.mutex);
 		monitorArena.customer = monitorArena.customer + 1;
 		sem_post(&monitorArena.customerAvailable.mutex);
 
-		//printf("CS-3\n");
 
 		signal(monitorArena.customerAvailable);
 		if(monitorArena.stylist == 0) { // do not use while here
-			//printf("CS-4\n");
 			wait(monitorArena.stylistAvailable);
 		}
-		//printf("CS-5\n");
 		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.stylist = 0;
 		sem_post(&monitorArena.stylistAvailable.mutex);
-		//printf("CS-6\n");
 		status = 1;
-	} else if(monitorArena.customer == CHAIRS) {
-		//printf("CS-0\n");
-		signal(monitorArena.customerAvailable);
 	}
 	return status;
 }

@@ -12,19 +12,17 @@ extern int haircutCount;
 #define	CUSTOMER_COUNT	10 //40
 
 void stylistloop() {
-	printf("Barber start\n");
+	//printf("Barber start\n");
 	// add more variables as needed
 	int j;
 	while(1) {
 		salonState();
-		//printf("B\n");
 		if(haircutCount == CUSTOMER_COUNT) {
 			printf("All done\n");
 			break;
 		}
 		checkCustomer();
-		//printf("C\n");
-		printf("Cutting hair\n");
+		//printf("Cutting hair\n");
 		for(j = 0; j < DELAY; j++) {
 			// cut hair
 		}
@@ -32,13 +30,13 @@ void stylistloop() {
 }
 
 void customerloop() {
-	printf("Customer start\n");
+	//printf("Customer start\n");
 	// add more variables as needed
 	int j;
 	while(1) {
 		salonState();
 		if(checkStylist()) {
-			printf("Customer exit\n");
+			//printf("Customer exit\n");
 			break;
 		}
 		for(j = 0; j < DELAY; j++) {
@@ -48,10 +46,6 @@ void customerloop() {
 }
 
 int main() {
-	// Initialize the semaphores
-	//sem_init(&mutex, 0, 1);
-	//sem_init(&next, 0, 0);
-	//sem_init(&nextCount, 0, 0);
 	haircutCount = 0;
 	monInit();
 
