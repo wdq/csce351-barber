@@ -4,16 +4,17 @@
 #include <semaphore.h>
 #include "monitor.h"
 
+#define DELAY 100000 // adjust this value
+#define	CUSTOMER_COUNT	40
+
+// Keep track of the arena and number of haircuts from the other file.
 extern arena monitorArena;
 extern int haircutCount;
 
-// ==== sleepingStylistMon ====//
-#define DELAY 100000 // adjust this value
-#define	CUSTOMER_COUNT	10 //40
-
+// This function runs in the stylist thread.
+// It continually prints the salon state, checks for customers in the monitor, and cuts hair when possible.
+// It quits once the number of haircuts reaches the maximum so the baber won't fall into a coma.
 void stylistloop() {
-	//printf("Barber start\n");
-	// add more variables as needed
 	int j;
 	while(1) {
 		salonState();
@@ -22,21 +23,20 @@ void stylistloop() {
 			break;
 		}
 		checkCustomer();
-		//printf("Cutting hair\n");
 		for(j = 0; j < DELAY; j++) {
 			// cut hair
 		}
 	}
 }
 
+// This function runs in the customer thread.
+// It continually prints the salon state, checks for an available seat, and goes shopping when there isn't one.
+// It quits once it gets a haircut since that's all they want.
 void customerloop() {
-	//printf("Customer start\n");
-	// add more variables as needed
 	int j;
 	while(1) {
 		salonState();
 		if(checkStylist()) {
-			//printf("Customer exit\n");
 			break;
 		}
 		for(j = 0; j < DELAY; j++) {
@@ -45,7 +45,9 @@ void customerloop() {
 	}
 }
 
+// This function initializes the haircut counter, and monitor, and then starts the threads.
 int main() {
+	// Initialize monitor and haircut counter.
 	haircutCount = 0;
 	monInit();
 
