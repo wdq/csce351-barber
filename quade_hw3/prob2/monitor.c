@@ -84,16 +84,15 @@ void signal(cond cv) {
 void salonState() { // print how many customers are waiting
 	// print the state of the waiting chair using the following
 	// format: first used chair: last used chair: count\n.
+	sem_wait(&monitorArena.mutex);
 	printf("haircuts: %i, customer: %i, stylist: %i, blockedCustomer: %i, blockedStylist: %i\n", haircutCount, monitorArena.customer, monitorArena.stylist, count(monitorArena.customerAvailable), count(monitorArena.stylistAvailable));
+	sem_post(&monitorArena.mutex);
 }
 
 // Called from stylistLoop
 void checkCustomer() {
-	sem_wait(&monitorArena.customerAvailable.mutex);
-	sem_wait(&monitorArena.stylistAvailable.mutex);
+	sem_wait(&monitorArena.mutex);
 	monitorArena.stylist = 1;
-	sem_post(&monitorArena.customerAvailable.mutex);
-	sem_post(&monitorArena.stylistAvailable.mutex);
 
 	signal(monitorArena.stylistAvailable); // stylist's ready to cut hair
 
@@ -101,38 +100,29 @@ void checkCustomer() {
 		wait(monitorArena.customerAvailable); // If there aren't customers, then wait/sleep.
 	}
 
-	sem_wait(&monitorArena.customerAvailable.mutex);
-	sem_wait(&monitorArena.stylistAvailable.mutex);
 	monitorArena.customer = monitorArena.customer - 1;
 	haircutCount = haircutCount + 1;
-	sem_post(&monitorArena.customerAvailable.mutex);
-	sem_post(&monitorArena.stylistAvailable.mutex);
+	sem_post(&monitorArena.mutex);
 }
 
 // Called from customerLoop
 int checkStylist() {
 	// This function may have faults.
 	// If you think it does, you'll need to fix it.
+	sem_wait(&monitorArena.mutex);
 	int status = 0;
 	if(monitorArena.customer < CHAIRS) {
 
-		sem_wait(&monitorArena.customerAvailable.mutex);
-		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.customer = monitorArena.customer + 1;
-		sem_post(&monitorArena.customerAvailable.mutex);
-		sem_post(&monitorArena.stylistAvailable.mutex);
 
 
 		signal(monitorArena.customerAvailable);
 		if(monitorArena.stylist == 0) { // do not use while here
 			wait(monitorArena.stylistAvailable);
 		}
-		sem_wait(&monitorArena.customerAvailable.mutex);
-		sem_wait(&monitorArena.stylistAvailable.mutex);
 		monitorArena.stylist = 0;
-		sem_post(&monitorArena.customerAvailable.mutex);
-		sem_post(&monitorArena.stylistAvailable.mutex);
 		status = 1;
 	}
+	sem_post(&monitorArena.mutex);
 	return status;
 }
